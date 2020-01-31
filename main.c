@@ -424,33 +424,36 @@ void moduloRelatorios() {
         printf("Escolha uma opção:");
         printf("\n1 - Vendas realizadas");
         printf("\n2 - Produto mais vendido");
-        printf("\n3 - Funcinário mais lucrativo");
+        printf("\n3 - Funcinário mais produtivo");
+        printf("\n0 - Voltar");
         printf("\nOpção: ");
         scanf("%d", &op);
-        getchar();
 
-        printf("Data de início (dd/mm/aaaa): ");
-        stread(data, 11);
-        while (!datevalid(data)) {
-            breadcrumb("Painel de Controle / Módulo de Relatórios");
-            printf("Data inválida (%s). Utilize o formato: dd/mm/aaaa\n", data);
-            printf("Data de início: ");
+        if (op != 0) {
+            getchar();
+            printf("Data de início (dd/mm/aaaa): ");
             stread(data, 11);
-        };
+            while (!datevalid(data)) {
+                breadcrumb("Painel de Controle / Módulo de Relatórios");
+                printf("Data inválida (%s). Utilize o formato: dd/mm/aaaa\n", data);
+                printf("Data de início: ");
+                stread(data, 11);
+            };
 
-        getchar();
-        dataInicio = formatdate(data);
+            getchar();
+            dataInicio = datetoint(data);
 
-        printf("Data final (dd/mm/aaaa): ");
-        stread(data, 11);
-        while (!datevalid(data)) {
-            breadcrumb("Painel de Controle / Módulo de Relatórios");
-            printf("Data inválida (%s). Utilize o formato: dd/mm/aaaa\n", data);
-            printf("Data final: ");
+            printf("Data final (dd/mm/aaaa): ");
             stread(data, 11);
-        };
+            while (!datevalid(data)) {
+                breadcrumb("Painel de Controle / Módulo de Relatórios");
+                printf("Data inválida (%s). Utilize o formato: dd/mm/aaaa\n", data);
+                printf("Data final: ");
+                stread(data, 11);
+            };
 
-        dataFim = formatdate(data);
+            dataFim = datetoint(data);
+        }
 
         switch (op) {
             case 1:
@@ -463,7 +466,7 @@ void moduloRelatorios() {
 
                 FILE *f = fopen("database/vendas.bin", "rb");
                 while (fread(&tmpVenda, sizeof(Venda), 1, f)) {
-                    entrada = formatdate(tmpVenda.data);
+                    entrada = datetoint(tmpVenda.data);
                     if (entrada >= dataInicio && entrada <= dataFim) {
                         tmpFuncionario = buscarFuncionario(tmpVenda.funcionario_codigo);
                         tmpProduto = buscarProduto(tmpVenda.produto_codigo);
@@ -479,17 +482,41 @@ void moduloRelatorios() {
                 fclose(f);
             break;
             case 2:
-                int id;
-                float maior = 0;
+                breadcrumb("Painel de Controle / Módulo de Relatórios / Produto mais vendido");
+
+                if (!existeVendaPeriodo(dataInicio, dataFim)) {
+                    printf("Não houve vendas no período selecionado.\n");
+                    break;
+                }
                 
+                Produto produto = getProdutoMaisVendido(dataInicio, dataFim);
+                printf("Produto mais vendido: %s\n", produto.descricao);
+                printf("Código: %d\n", produto.codigo);
+                printf("Quantidade em estoque: %d\n", produto.quantidade);
+                printf("Preço: %.2f\n", produto.preco);
+                printf("Vendas no período: %d\n", contarVendasProdutoQuantidade(produto.codigo, dataInicio, dataFim));
+                printf("Total arrecadado: %.2f\n\n", getVendasTotalProduto(produto.codigo, dataInicio, dataFim));
             break;
+            case 3:
+                breadcrumb("Painel de Controle / Módulo de Relatórios / Funcionário mais produtivo");
+
+                if (!existeVendaPeriodo(dataInicio, dataFim)) {
+                    printf("Não houve vendas no período selecionado.\n");
+                    break;
+                }
+
+                Funcionario funcionario = getFuncionarioMaisProdutivo(dataInicio, dataFim);
+                printf("Funcionário: %s\n", funcionario.nome);
+                printf("Código: %d\n", funcionario.codigo);
+                printf("Total arrecadado: %.2f\n\n", getVendasTotalFuncionario(funcionario.codigo, dataInicio, dataFim));
             case 0:
             break;
             default:
                 printf("Opção inválida.\n");
         }
 
-        wait();
+        if (op != 0)
+            wait();
 
     } while (op != 0);
 }
