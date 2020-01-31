@@ -9,17 +9,6 @@ typedef struct {
     char telefone[11];
 } Funcionario;
 
-
-void cadastrarFuncionario();
-void salvarFuncionario(Funcionario funcionario);
-void listarFuncionarios();
-void copiarFuncionarios();
-int existeFuncionario(int codigo);
-int contarFuncionarios();
-Funcionario lerFuncionario();
-Funcionario buscarFuncionario();
-Funcionario removerFuncionario();
-
 int existeFuncionario(int codigo) {
     FILE *f;
     Funcionario tmpFuncionario;
@@ -60,16 +49,6 @@ void copiarFuncionarios() {
     fclose(tf);
 }
 
-void cadastrarFuncionario() {
-    printf("Cadastro de funcionario:\n");
-    getchar();
-
-    Funcionario funcionario = lerFuncionario();
-    salvarFuncionario(funcionario);
-    printf("Funcionario salvo com sucesso.");
-
-}
-
 void salvarFuncionario(Funcionario funcionario) {
     FILE *f, *tf;
     Funcionario tmpFuncionario;
@@ -97,7 +76,6 @@ void salvarFuncionario(Funcionario funcionario) {
 }
 
 void listarFuncionarios() {
-    printf("=================== Lista de funcionarios cadastrados ==================\n\n");
     FILE *f;
     f = fopen("database/funcionarios.bin", "rb");
     char tmp;
@@ -109,7 +87,6 @@ void listarFuncionarios() {
         printf("Data de Nascimento: %s\n", tmpFuncionario.data_nascimento);
         printf("Telefone: %s\n\n", tmpFuncionario.telefone);
     }
-    printf("====================================================================\n\n");
     fclose(f);
 }
 
@@ -118,13 +95,18 @@ Funcionario lerFuncionario() {
     novoFuncionario.codigo = 0;
 
     printf("Nome: ");
-    stread(novoFuncionario.nome, 30);
+    stread(novoFuncionario.nome, 31);
 
     printf("Cargo: ");
-    stread(novoFuncionario.cargo, 30);
+    stread(novoFuncionario.cargo, 31);
 
     printf("Data de Nascimento: ");
-    stread(novoFuncionario.data_nascimento, 10);
+    stread(novoFuncionario.data_nascimento, 11);
+    while (!datevalid(novoFuncionario.data_nascimento)) {
+        printf("Data inválida (%s). Utilize o formato: dd/mm/aaaa\n", novoFuncionario.data_nascimento);
+        printf("Data de Nascimento: ");
+        stread(novoFuncionario.data_nascimento, 11);
+    }
 
     printf("Sexo (M/F): ");
     scanf("%c", novoFuncionario.sexo);
