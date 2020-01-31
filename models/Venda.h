@@ -69,6 +69,65 @@ int contarVendasProduto(int codigo) {
     return qtd;
 }
 
+int contarVendasProdutoQuantidade(int codigo, int dataInicio, int dataFim) {
+    FILE *f;
+    Venda tmpVenda;
+    f = fopen("database/vendas.bin", "rb");
+    int qtd = 0;
+    if (!f) {
+        return 0;
+    }
+    while (fread(&tmpVenda, sizeof(Venda), 1, f)) {
+        if (!(datetoint(tmpVenda.data) >= dataInicio && datetoint(tmpVenda.data) <= dataFim))
+            continue;
+
+        if (tmpVenda.produto_codigo == codigo)
+            qtd += tmpVenda.quantidade;
+    }
+    fclose(f);
+    return qtd;
+}
+
+float getVendasTotalProduto(int codigo, int dataInicio, int dataFim) {
+    FILE *f;
+    Venda tmpVenda;
+    f = fopen("database/vendas.bin", "rb");
+    float qtd = 0;
+    if (!f) {
+        return 0;
+    }
+    while (fread(&tmpVenda, sizeof(Venda), 1, f)) {
+        if (!(datetoint(tmpVenda.data) >= dataInicio && datetoint(tmpVenda.data) <= dataFim))
+            continue;
+
+        if (tmpVenda.produto_codigo == codigo)
+            qtd += tmpVenda.preco * tmpVenda.quantidade;
+    }
+    fclose(f);
+    return qtd;
+}
+
+float getVendasTotalFuncionario(int codigo, int dataInicio, int dataFim) {
+    FILE *f;
+    Venda tmpVenda;
+    f = fopen("database/vendas.bin", "rb");
+    float qtd = 0;
+    if (!f) {
+        return 0;
+    }
+
+    int data = 0;
+    while (fread(&tmpVenda, sizeof(Venda), 1, f)) {
+        data = datetoint(tmpVenda.data);
+        if (data >= dataInicio && data <= dataFim) {
+            if (tmpVenda.funcionario_codigo == codigo)
+                qtd += tmpVenda.preco * tmpVenda.quantidade;
+        }
+    }
+    fclose(f);
+    return qtd;
+}
+
 int existeVenda(int codigo) {
 
     if (!contarVendas()) {
@@ -80,6 +139,28 @@ int existeVenda(int codigo) {
     f = fopen("database/vendas.bin", "rb");
     while (fread(&tmpVenda, sizeof(Venda), 1, f)) {
         if (codigo == tmpVenda.codigo) {
+            fclose(f);
+            return 1;
+        }
+    }
+    fclose(f);
+    return 0;
+}
+
+int existeVendaPeriodo(int dataInicio, int dataFim) {
+
+    if (!contarVendas()) {
+        return 0;
+    }
+
+    FILE *f;
+    Venda tmpVenda;
+    int data = 0;
+    f = fopen("database/vendas.bin", "rb");
+    while (fread(&tmpVenda, sizeof(Venda), 1, f)) {
+        data = datetoint(tmpVenda.data);
+        if (data >= dataInicio && data <= dataFim) {
+            fclose(f);
             return 1;
         }
     }
@@ -145,16 +226,20 @@ void listarVendas() {
 void salvarVendaNegativa(Venda venda) {
     FILE *f;
     strcpy(venda.motivo, "Sem estoque");
-    f = fopen("database/vendas-erradas.bin", "ab");
-    fwrite(&venda, sizeof(Venda), 1, f);
+    f = fopen("database/vendas-erradas.csv", "a");
+    Funcionario funcionario = buscarFuncionario(venda.funcionario_codigo);
+    Produto produto = buscarProduto(venda.produto_codigo);
+    fprintf(f, "%s,%s,%d,%.2f,%s,%s\n", produto.descricao, venda.data, venda.quantidade, venda.preco, funcionario.nome, venda.motivo);
     fclose(f);
 }
 
 void salvarVendaSemEstoque(Venda venda) {
     FILE *f;
     strcpy(venda.motivo, "Quantidade mínima atingida");
-    f = fopen("database/vendas-erradas.bin", "ab");
-    fwrite(&venda, sizeof(Venda), 1, f);
+    f = fopen("database/vendas-erradas.csv", "a");
+    Funcionario funcionario = buscarFuncionario(venda.funcionario_codigo);
+    Produto produto = buscarProduto(venda.produto_codigo);
+    fprintf(f, "%s,%s,%d,%.2f,%s,%s\n", produto.descricao, venda.data, venda.quantidade, venda.preco, funcionario.nome, venda.motivo);
     fclose(f);
 }
 
@@ -248,6 +333,7 @@ Venda buscarVenda(int codigo) {
             return tmpVenda;
         }
     }
+    fclose(f);
 }
 
 Venda removerVenda(int codigo) {
@@ -269,4 +355,37 @@ Venda removerVenda(int codigo) {
     fclose(tf);
 
     return removido;
+}
+
+Produto getProdutoMaisVendido(int dataInicio, int dataFim) {
+    FILE *f;
+    Produto tmpProduto;
+    int maior = 0, codigo;
+    f = fopen("database/produtos.bin", "rb");
+    while (fread(&tmpProduto, sizeof(Produto), 1, f)) {
+        int quantidade = contarVendasProdutoQuantidade(tmpProduto.codigo, dataInicio, dataFim);
+        if (maior < quantidade) {
+            maior = quantidade;
+            codigo = tmpProduto.codigo;
+        }
+    }
+    fclose(f);
+    return buscarProduto(codigo);
+}
+
+Funcionario getFuncionarioMaisProdutivo(int dataInicio, int dataFim) {
+    FILE *f;
+    Funcionario tmpFuncionario;
+    float maior = 0;
+    int codigo;
+    f = fopen("database/funcionarios.bin", "rb");
+    while (fread(&tmpFuncionario, sizeof(Funcionario), 1, f)) {
+        float total = getVendasTotalFuncionario(tmpFuncionario.codigo, dataInicio, dataFim);
+        if (maior < total) {
+            maior = total;
+            codigo = tmpFuncionario.codigo;
+        }
+    }
+    fclose(f);
+    return buscarFuncionario(codigo);
 }
