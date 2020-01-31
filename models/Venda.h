@@ -229,7 +229,7 @@ void salvarVendaNegativa(Venda venda) {
     f = fopen("database/vendas-erradas.csv", "a");
     Funcionario funcionario = buscarFuncionario(venda.funcionario_codigo);
     Produto produto = buscarProduto(venda.produto_codigo);
-    fprintf(f, "%d,%s,%.2f,%s,%s,%s\n", venda.quantidade, venda.data, venda.preco, funcionario.nome, produto.descricao, venda.motivo);
+    fprintf(f, "%s,%s,%d,%.2f,%s,%s\n", produto.descricao, venda.data, venda.quantidade, venda.preco, funcionario.nome, venda.motivo);
     fclose(f);
 }
 
@@ -239,7 +239,7 @@ void salvarVendaSemEstoque(Venda venda) {
     f = fopen("database/vendas-erradas.csv", "a");
     Funcionario funcionario = buscarFuncionario(venda.funcionario_codigo);
     Produto produto = buscarProduto(venda.produto_codigo);
-    fprintf(f, "%d,%s,%.2f,%s,%s,%s\n", venda.quantidade, venda.data, venda.preco, funcionario.nome, produto.descricao, venda.motivo);
+    fprintf(f, "%s,%s,%d,%.2f,%s,%s\n", produto.descricao, venda.data, venda.quantidade, venda.preco, funcionario.nome, venda.motivo);
     fclose(f);
 }
 
